@@ -1,0 +1,35 @@
+- name: deploy lamp stack
+  hosts: all
+  become: true
+  tasks:
+    - name: Copy file with owner and permissions
+      ansible.builtin.copy:
+        src: /home/mdaniel/lamp/lampautodep.sh
+        dest: /home/vagrant/lampautodep.sh
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Install lamp stack and laravel
+      script: /home/vagrant/lampautodep.sh
+    
+    - name: Set cron job to check uptime of the server every 12 am
+      cron:
+        name: set cron job to check uptime of the server every 12 am
+        minute: "0"
+        hour: "0"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        job: /usr/bin/uptime > /var/log/uptime_check.log 2>&1
+        state: present
+
+    - name: Verify PHP application accessibility
+      uri:
+        url: "http://10.0.2.15/info.php"
+        return_content: yes
+      register: php_app_response
+
+    - name: Print PHP application response
+      debug:
+        var: php_app_response
